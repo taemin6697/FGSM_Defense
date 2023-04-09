@@ -9,7 +9,7 @@ from PIL import Image
 import os
 from dataset import ImageClassificationDataset
 from model import VGG16,DnCNN
-from utils import newmodel_freeze, only_class_FGSM
+from utils import model_freeze, only_class_FGSM
 import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm

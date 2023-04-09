@@ -7,7 +7,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 import os
 from dataset import ImageClassificationDataset
-from model import VGG16,DnCNN,new_model
+from model import VGG16,DnCNN,new_model,REDNet30,DenoisingAutoencoder
 from utils import model_freeze,denormalize,show_test_batch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     val_dataset = ImageClassificationDataset(val_data_path, transform='val')
     test_dataset = ImageClassificationDataset(test_data_path, transform='test')
 
-    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True,num_workers=4)
+    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True,num_workers=4)
     val_dataloader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=4)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
 
@@ -40,7 +40,8 @@ if __name__ == "__main__":
     vgg16.load_state_dict(torch.load('E:/archive/checkpoint/BIRDS_515_SPECIES_epoch_5_valacc_93.70873786407768.pt'))
 
 
-    autoencoder = DnCNN()
+    #autoencoder = DnCNN()
+    autoencoder = DenoisingAutoencoder()
 
     model = new_model(autoencoder,vgg16)
     model = model_freeze(model)
@@ -100,7 +101,7 @@ if __name__ == "__main__":
             # loss3 = (loss*2.0)+(loss2)
             loss3 = loss + loss2
         #     # backward pass: compute gradient of the loss with respect to model parameters
-            loss3.backward()
+            loss.backward()
             # perform a single optimization step (parameter update)
             optimizer.step()
             # update running training loss
@@ -169,10 +170,12 @@ if __name__ == "__main__":
             val_acc
         ))
 
+
+
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             patience = 0
-            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_autoencoder_vgg16_epoch_{epoch + 1}_valacc_{val_acc}.pt")
+            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_autoencoder_epoch_{epoch + 1}_valacc_{val_acc}.pt")
             torch.save(model.state_dict(), checkpoint_path)
         else:
             patience += 1

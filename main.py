@@ -5,7 +5,7 @@ from PIL import Image
 import os
 from dataset import ImageClassificationDataset
 from model import VGG16,DnCNN
-from utils import newmodel_freeze
+from utils import model_freeze
 import torch.nn as nn
 import torch.nn.functional as F
 

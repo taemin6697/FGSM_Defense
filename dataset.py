@@ -29,6 +29,10 @@ test_transform = T.Compose([
     T.ToTensor(),
     T.Normalize(normalise_means, normalise_stds)])
 
+None_transform = T.Compose([
+    T.Resize((224,224)),
+    T.ToTensor(),])
+
 class ImageClassificationDataset(Dataset):
     def __init__(self, root_dir, transform=None):
         self.root_dir = root_dir
@@ -54,7 +58,7 @@ class ImageClassificationDataset(Dataset):
         elif self.transform == 'val' or self.transform == 'test':
             img = test_transform(img)
         else:
-            img = img
+            img = None_transform(img)
         return img, label
 
     def __len__(self):

@@ -18,10 +18,31 @@ def denormalize(img):
     stds = torch.tensor(normalise_stds).view(3, 1, 1)
     return img * stds + means
 
+def show_test_only_batch(images,ori,class_map):
+    images = denormalize(images.detach().cpu())
+    ori = denormalize(ori.detach().cpu())
+    images = images.detach().cpu()
+    ori = ori.detach().cpu()
+    images = images.numpy()
+
+    fig, ax = plt.subplots(4, 4, figsize=(15, 15))
+    fig.tight_layout()
+    for i in range(2):
+        for j in range(4):
+            ax[i+2, j].imshow(np.transpose(images[i*4+j], (1, 2, 0)))
+            ax[i+2, j].axis("off")
+
+            ax[i, j].imshow(np.transpose(ori[i * 4 + j], (1, 2, 0)))
+            ax[i, j].axis("off")
+
+    plt.show()
+
 
 def show_test_batch(images,ori,preds, targets, class_map):
     images = denormalize(images.detach().cpu())
     ori = denormalize(ori.detach().cpu())
+    images = images.detach().cpu()
+    ori = ori.detach().cpu()
     images = images.numpy()
     preds = preds.detach().cpu().numpy()
     targets = targets.cpu().numpy()
