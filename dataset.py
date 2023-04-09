@@ -3,18 +3,27 @@ from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from PIL import Image
 import os
+from torchvision import transforms as T
+# train_transforms = transforms.Compose([
+# #     transforms.RandomResizedCrop(256),
+# #     transforms.RandomHorizontalFlip(),
+# #     transforms.ToTensor(),
+# #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+# # ])
+# # test_transforms = transforms.Compose([
+# #     transforms.Resize((256,256)),
+# #     transforms.ToTensor(),
+# #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+# # ])
+normalise_means = [0.4914, 0.4822, 0.4465]
+normalise_stds = [0.2023, 0.1994, 0.2010]
 
-train_transforms = transforms.Compose([
-    transforms.RandomResizedCrop(256),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-])
-test_transforms = transforms.Compose([
-    transforms.Resize((256,256)),
-    transforms.ToTensor(),
-    transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-])
+train_transform = T.Compose([T.RandomHorizontalFlip(),
+    T.ToTensor(),
+    T.Normalize(normalise_means, normalise_stds),])
+
+test_transform = T.Compose([T.ToTensor(), T.Normalize(normalise_means, normalise_stds)])
+
 class ImageClassificationDataset(Dataset):
     def __init__(self, root_dir, transform=None):
         self.root_dir = root_dir
@@ -36,9 +45,9 @@ class ImageClassificationDataset(Dataset):
         label = self.labels[index]
         img = Image.open(img_path)
         if self.transform == 'train':
-            img = train_transforms(img)
+            img = train_transform(img)
         elif self.transform == 'val' or self.transform == 'test':
-            img = test_transforms(img)
+            img = test_transform(img)
         else:
             img = img
         return img, label

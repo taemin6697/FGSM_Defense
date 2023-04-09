@@ -1,7 +1,7 @@
 import torch
 import torchvision
 from torch import optim
-from torch.optim.lr_scheduler import StepLR
+from torch.optim.lr_scheduler import StepLR, CosineAnnealingLR
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from PIL import Image
@@ -14,9 +14,9 @@ import torch.nn.functional as F
 from tqdm import tqdm
 
 if __name__ == "__main__":
-    train_data_path = "E:/caltech256images/Kaggle Competition Train and test/output/train"
-    val_data_path = "E:/caltech256images/Kaggle Competition Train and test/output/val"
-    test_data_path = "E:/caltech256images/Kaggle Competition Train and test/output/test"
+    train_data_path = "E:/archive/train"
+    val_data_path = "E:/archive/valid"
+    test_data_path = "E:/archive/test"
     checkpoints_dir = 'E:/caltech256images/Kaggle Competition Train and test/output/check'
 
     train_dataset = ImageClassificationDataset(train_data_path, transform='train')
@@ -24,18 +24,18 @@ if __name__ == "__main__":
     test_dataset = ImageClassificationDataset(test_data_path, transform='test')
 
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True,num_workers=4)
-    val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=True, num_workers=4)
-    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=True, num_workers=4)
+    val_dataloader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4)
+    test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
 
     class_list = train_dataset.classes
     criterion = nn.CrossEntropyLoss()
 
     model = torchvision.models.vgg16(pretrained=True)
-    model.classifier[6] = nn.Linear(in_features=4096, out_features=256)
+    model.classifier[6] = nn.Linear(in_features=4096, out_features=515)
 
     # Define the optimizer and learning rate scheduler
-    optimizer = optim.Adam(model.parameters(), lr=0.0001)
-    scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
+    optimizer = optim.AdamW(model.parameters(), lr=0.0001)
+    scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=0.001)
     # Define the loss function
     criterion = nn.CrossEntropyLoss()
     # Define the device to use for training
@@ -78,7 +78,6 @@ if __name__ == "__main__":
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-
         train_loss = train_loss / len(train_dataloader.dataset)
         train_acc = 100.0 * correct / total
         train_acc_list.append(train_acc)
@@ -115,5 +114,5 @@ if __name__ == "__main__":
         print('train_acc = ',train_acc,'val_acc = ',val_acc,'train_loss = ',train_loss,'val_loss = ',val_loss)
         # Save the model checkpoint
         if (epoch + 1) % 5 == 0:
-            checkpoint_path = os.path.join(checkpoints_dir, f"caltech256_epoch_{epoch + 1}.pt")
+            checkpoint_path = os.path.join(checkpoints_dir, f"caltech256_epoch_{epoch + 1}_valacc_{val_acc}.pt")
             torch.save(model.state_dict(), checkpoint_path)
