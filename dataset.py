@@ -18,11 +18,16 @@ from torchvision import transforms as T
 normalise_means = [0.4914, 0.4822, 0.4465]
 normalise_stds = [0.2023, 0.1994, 0.2010]
 
-train_transform = T.Compose([T.RandomHorizontalFlip(),
+train_transform = T.Compose([
+    T.Resize((224,224)),
+    T.RandomHorizontalFlip(),
     T.ToTensor(),
     T.Normalize(normalise_means, normalise_stds),])
 
-test_transform = T.Compose([T.ToTensor(), T.Normalize(normalise_means, normalise_stds)])
+test_transform = T.Compose([
+    T.Resize((224,224)),
+    T.ToTensor(),
+    T.Normalize(normalise_means, normalise_stds)])
 
 class ImageClassificationDataset(Dataset):
     def __init__(self, root_dir, transform=None):

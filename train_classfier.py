@@ -17,7 +17,7 @@ if __name__ == "__main__":
     train_data_path = "E:/archive/train"
     val_data_path = "E:/archive/valid"
     test_data_path = "E:/archive/test"
-    checkpoints_dir = 'E:/caltech256images/Kaggle Competition Train and test/output/check'
+    checkpoints_dir = "E:/archive/checkpoint"
 
     train_dataset = ImageClassificationDataset(train_data_path, transform='train')
     val_dataset = ImageClassificationDataset(val_data_path, transform='val')
@@ -28,6 +28,7 @@ if __name__ == "__main__":
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
 
     class_list = train_dataset.classes
+    print(class_list)
     criterion = nn.CrossEntropyLoss()
 
     model = torchvision.models.vgg16(pretrained=True)
@@ -47,6 +48,10 @@ if __name__ == "__main__":
     train_acc_list = []
     val_acc_list = []
     test_acc_list = []
+
+    best_val_acc = 0.0
+    patience = 0
+    early_stop_epochs = 3
 
     # Train the model
     for epoch in range(num_epochs):
@@ -113,6 +118,13 @@ if __name__ == "__main__":
         val_acc_list.append(val_acc)
         print('train_acc = ',train_acc,'val_acc = ',val_acc,'train_loss = ',train_loss,'val_loss = ',val_loss)
         # Save the model checkpoint
-        if (epoch + 1) % 5 == 0:
-            checkpoint_path = os.path.join(checkpoints_dir, f"caltech256_epoch_{epoch + 1}_valacc_{val_acc}.pt")
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            patience = 0
+            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_SPECIES_epoch_{epoch + 1}_valacc_{val_acc}.pt")
             torch.save(model.state_dict(), checkpoint_path)
+        else:
+            patience += 1
+            if patience >= early_stop_epochs:
+                print(f"No improvement in validation accuracy for {early_stop_epochs} epochs. Stopping training early.")
+                break

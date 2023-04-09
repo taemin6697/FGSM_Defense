@@ -11,13 +11,13 @@ import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
 import numpy as np
-
+from utils import denormalize
 # define the NN architecture
 class DnCNN(nn.Module):
     def __init__(self, num_layers=17, num_features=64):
         super(DnCNN, self).__init__()
         layers = [nn.Sequential(nn.Conv2d(3, num_features, kernel_size=3, stride=1, padding=1),
-                                nn.ReLU(inplace=True))]
+                                nn.LeakyReLU(inplace=True))]
         for i in range(num_layers - 2):
             layers.append(nn.Sequential(nn.Conv2d(num_features, num_features, kernel_size=3, padding=1),
                                         nn.BatchNorm2d(num_features),
@@ -127,7 +127,7 @@ class new_model(nn.Module):
         self.model2 = model2#VGG16
     def forward(self,x):
         x = self.model1(x)
-        temp = x#정제된 이미지
-        class_ = self.model2(x)#분류해서 나온값 클래스가
+        clean_img = x#정제된 이미지
+        class_ = self.model2(clean_img)#분류해서 나온값 클래스가
 
-        return x,class_
+        return clean_img,class_
