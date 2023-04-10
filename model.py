@@ -19,7 +19,7 @@ class DnCNN(nn.Module):
     def __init__(self, num_layers=17, num_features=64):
         super(DnCNN, self).__init__()
         layers = [nn.Sequential(nn.Conv2d(3, num_features, kernel_size=3, stride=1, padding=1),
-                                nn.LeakyReLU(inplace=True))]
+                                nn.ReLU(inplace=True))]
         for i in range(num_layers - 2):
             layers.append(nn.Sequential(nn.Conv2d(num_features, num_features, kernel_size=3, padding=1),
                                         nn.BatchNorm2d(num_features),
@@ -139,21 +139,18 @@ class DenoisingAutoencoder(nn.Module):
             nn.Conv2d(64, 128, kernel_size=3, stride=1, padding=1),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(128, 256, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2)
+
         )
 
         # Decoder
         self.decoder = nn.Sequential(
-            nn.ConvTranspose2d(256, 128, kernel_size=3, stride=2, padding=1, output_padding=1),
-            nn.ReLU(),
+
             nn.ConvTranspose2d(128, 64, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.ReLU(),
             nn.ConvTranspose2d(64, 32, kernel_size=3, stride=2, padding=1, output_padding=1),
             nn.ReLU(),
             nn.ConvTranspose2d(32, 3, kernel_size=3, stride=2, padding=1, output_padding=1),
-            #nn.LeakyReLU()
+            nn.Sigmoid()
         )
 
     def forward(self, x):

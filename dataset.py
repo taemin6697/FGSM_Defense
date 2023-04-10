@@ -4,17 +4,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 import os
 from torchvision import transforms as T
-# train_transforms = transforms.Compose([
-# #     transforms.RandomResizedCrop(256),
-# #     transforms.RandomHorizontalFlip(),
-# #     transforms.ToTensor(),
-# #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-# # ])
-# # test_transforms = transforms.Compose([
-# #     transforms.Resize((256,256)),
-# #     transforms.ToTensor(),
-# #     transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
-# # ])
+
 normalise_means = [0.4914, 0.4822, 0.4465]
 normalise_stds = [0.2023, 0.1994, 0.2010]
 

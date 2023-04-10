@@ -35,7 +35,14 @@ if __name__ == "__main__":
     model.classifier[6] = nn.Linear(in_features=4096, out_features=515)
     model.load_state_dict(torch.load('E:/archive/checkpoint/BIRDS_515_SPECIES_epoch_5_valacc_93.70873786407768.pt'))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = new_model(autoencoder, vgg16)
+    model = model_freeze(model)
     model = model.to(device)
+
+    model = model.to(device)
+
+
 
     ep = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
     accuracy = []

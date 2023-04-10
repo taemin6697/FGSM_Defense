@@ -20,16 +20,16 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 if __name__ == "__main__":
-    train_data_path = "E:/archive/train"
-    val_data_path = "E:/archive/valid"
-    test_data_path = "E:/archive/test"
-    checkpoints_dir = "E:/archive/checkpoint"
+    train_data_path = "./archive/train"
+    val_data_path = "./archive/valid"
+    test_data_path = "./archive/test"
+    checkpoints_dir = "./archive/checkpoint"
 
     train_dataset = ImageClassificationDataset(train_data_path, transform='train')
     val_dataset = ImageClassificationDataset(val_data_path, transform='val')
     test_dataset = ImageClassificationDataset(test_data_path, transform='test')
 
-    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True,num_workers=4)
+    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True,num_workers=4)
     val_dataloader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=4)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
 
@@ -45,10 +45,13 @@ if __name__ == "__main__":
     autoencoder = DenoisingAutoencoder()
 
     model = new_model(autoencoder,vgg16)
+
+    model.load_state_dict(torch.load('./archive/checkpoint/BIRDS_515_Dncnn_vgg16_epoch_11_trainacc_54.385668004448526.pt'))
+
     model = model_freeze(model)
     model = model.to(device)
 
-    optimizer = optim.AdamW(model.parameters(), lr=0.001)
+    optimizer = optim.AdamW(model.parameters(), lr=0.0005)
     scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=0.001)
 
     CrossEntropy = nn.CrossEntropyLoss()
@@ -56,16 +59,16 @@ if __name__ == "__main__":
 
     COUNTER = 10
 
-    noise_factor = 0.2
-    n_epochs = 40
+    noise_factor = 0.1
+    n_epochs = 100
     batch_size= 32
 
     train_acc_list = []
     val_acc_list = []
-
+    best_train_acc = 0.0
     best_val_acc = 0.0
     patience = 0
-    early_stop_epochs = 3
+    early_stop_epochs = 100
     vis_count = 0
     for epoch in range(1, n_epochs + 1):
         # monitor training loss
@@ -97,11 +100,10 @@ if __name__ == "__main__":
             # the "target" is still the original, not-noisy images
 
             loss = MSE(outputs, images.cuda())
-            loss2 = CrossEntropy(class_, _.cuda())
-            # loss3 = torch.sum(loss2,loss)
-            # loss3 = (loss*2.0)+(loss2)
+            loss2 = CrossEntropy(class_, _.cuda())*0.1
+
             loss3 = loss + loss2
-        #     # backward pass: compute gradient of the loss with respect to model parameters
+             # backward pass: compute gradient of the loss with respect to model parameters
             loss3.backward()
             # perform a single optimization step (parameter update)
             optimizer.step()
@@ -116,7 +118,7 @@ if __name__ == "__main__":
             correct += (pred == _.to(device)).sum().item()
 
             vis_count += 1
-            if vis_count%200 == 0:
+            if vis_count%500 == 0:
                 show_test_batch(outputs[:16], images[:16], _[:16], pred[:16], class_list)
 
         # print avg training statistics
@@ -151,7 +153,7 @@ if __name__ == "__main__":
                 total += _.size(0)
                 correct += (pred == _.to(device)).sum().item()
 
-        #show_test_batch(outputs, images, _, pred, class_list)
+        show_test_batch(outputs, images, _, pred, class_list)
 
         scheduler.step()
         val_loss = val_loss / len(val_dataloader)
@@ -175,15 +177,15 @@ if __name__ == "__main__":
         ))
         print('Epoch: {} \tAccuracy: {:.6f}'.format(
             epoch,
-            val_acc
+            train_acc
         ))
 
 
 
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
+        if train_acc > best_train_acc:
+            best_train_acc = train_acc
             patience = 0
-            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_autoencoder_vgg16_epoch_{epoch + 1}_valacc_{val_acc}.pt")
+            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_Dncnn_vgg16_epoch_{epoch + 1}_trainacc_{train_acc}.pt")
             torch.save(model.state_dict(), checkpoint_path)
         else:
             patience += 1

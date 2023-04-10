@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 from torch.autograd import Variable
 import torch.nn as nn
 import warnings
-
+from tqdm import tqdm
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 normalise_means = [0.4914, 0.4822, 0.4465]
@@ -180,7 +180,7 @@ def FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
     test_images = []
     test_label = []
     criterion = nn.CrossEntropyLoss()
-    for i, (images, labels) in enumerate(test_loader):
+    for i, (images, labels) in (enumerate(tqdm(test_loader))):
         if torch.cuda.is_available():
             images = images.cuda()
             labels = labels.cuda()
@@ -189,7 +189,7 @@ def FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
 
         outputs, temp = model(images)
 
-        loss = criterion(outputs, labels)
+        loss = criterion(temp, labels)
         model.zero_grad()
         if images.grad is not None:
             images.grad.data.fill_(0)
@@ -200,8 +200,8 @@ def FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
 
         adv_output, temp = model(Variable(images_adv))  # output by the model after adding adverserial noise
 
-        _, predicted = torch.max(outputs.data, 1)  # Prediction on the clean image
-        _, adv_predicted = torch.max(adv_output.data, 1)  # Prediction on the image after adding adverserial noise
+        _, predicted = torch.max(temp.data, 1)  # Prediction on the clean image
+        _, adv_predicted = torch.max(temp.data, 1)  # Prediction on the image after adding adverserial noise
 
         total += labels.size(0)
         correct += (predicted == labels).sum().item()

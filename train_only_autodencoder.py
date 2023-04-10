@@ -20,10 +20,10 @@ import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 if __name__ == "__main__":
-    train_data_path = "E:/archive/train"
-    val_data_path = "E:/archive/valid"
-    test_data_path = "E:/archive/test"
-    checkpoints_dir = "E:/archive/checkpoint"
+    train_data_path = "./archive/train"
+    val_data_path = "./archive/valid"
+    test_data_path = "./archive/test"
+    checkpoints_dir = "./archive/checkpoint"
 
     train_dataset = ImageClassificationDataset(train_data_path, transform='train')
     val_dataset = ImageClassificationDataset(val_data_path, transform='val')
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     model = model_freeze(model)
     model = model.to(device)
 
-    optimizer = optim.AdamW(model.parameters(), lr=0.001)
+    optimizer = optim.AdamW(model.parameters(), lr=0.0005)
     scheduler = CosineAnnealingLR(optimizer, T_max=100, eta_min=0.001)
 
     CrossEntropy = nn.CrossEntropyLoss()
@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     best_val_acc = 0.0
     patience = 0
-    early_stop_epochs = 3
+    early_stop_epochs = 5
     vis_count = 0
     for epoch in range(1, n_epochs + 1):
         # monitor training loss
