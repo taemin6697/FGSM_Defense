@@ -8,7 +8,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 import os
 from dataset import ImageClassificationDataset
-from model import VGG16,DnCNN,new_model,REDNet30,DenoisingAutoencoder
+from model import VGG16,DnCNN,new_model,REDNet30,DenoisingAutoencoder,DenoisingUNet
 from utils import model_freeze,denormalize,show_test_batch,FGSM
 import torch.nn as nn
 import torch.nn.functional as F
@@ -42,11 +42,11 @@ if __name__ == "__main__":
 
 
     #autoencoder = DnCNN()
-    autoencoder = DenoisingAutoencoder()
+    autoencoder = DenoisingUNet()
 
     model = new_model(autoencoder,vgg16)
 
-    model.load_state_dict(torch.load('./archive/checkpoint/BIRDS_515_Dncnn_vgg16_epoch_11_trainacc_54.385668004448526.pt'))
+    #model.load_state_dict(torch.load('./archive/checkpoint/BIRDS_515_Dncnn_vgg16_epoch_11_trainacc_54.385668004448526.pt'))
 
     model = model_freeze(model)
     model = model.to(device)
@@ -118,7 +118,7 @@ if __name__ == "__main__":
             correct += (pred == _.to(device)).sum().item()
 
             vis_count += 1
-            if vis_count%500 == 0:
+            if vis_count%100 == 0:
                 show_test_batch(outputs[:16], images[:16], _[:16], pred[:16], class_list)
 
         # print avg training statistics
@@ -165,15 +165,15 @@ if __name__ == "__main__":
 
         print('Epoch: {} \tTraining Loss MSE: {:.6f}'.format(
             epoch,
-            val_loss
+            train_loss
         ))
         print('Epoch: {} \tTraining Loss CE: {:.6f}'.format(
             epoch,
-            val_loss1
+            train_loss2
         ))
         print('Epoch: {} \tTotal Loss: {:.6f}'.format(
             epoch,
-            total_val_loss
+            train_loss3
         ))
         print('Epoch: {} \tAccuracy: {:.6f}'.format(
             epoch,
