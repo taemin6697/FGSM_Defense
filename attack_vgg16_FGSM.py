@@ -43,7 +43,7 @@ if __name__ == "__main__":
     ep = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
     accuracy = []
     for i in tqdm(range(len(ep))):
-        p = only_class_FGSM(train_dataloader,model=model,epsilon=ep[i])
+        p = only_class_FGSM(test_dataloader,model=model,epsilon=ep[i])
         accuracy.append(p)
     print(accuracy)
 

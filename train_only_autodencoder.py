@@ -8,8 +8,8 @@ import torchvision.transforms as transforms
 from PIL import Image
 import os
 from dataset import ImageClassificationDataset
-from model import VGG16,DnCNN,new_model,REDNet30,DenoisingAutoencoder
-from utils import model_freeze,denormalize,show_test_batch,FGSM
+from model import VGG16,DnCNN,new_model,REDNet30,DenoisingAutoencoder,DenoisingUNet
+from utils import model_freeze, denormalize, show_test_batch, FGSM, show_val_batch
 import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     val_dataset = ImageClassificationDataset(val_data_path, transform='val')
     test_dataset = ImageClassificationDataset(test_data_path, transform='test')
 
-    train_dataloader = DataLoader(train_dataset, batch_size=64, shuffle=True,num_workers=4)
+    train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True,num_workers=4)
     val_dataloader = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=4)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False, num_workers=4)
 
@@ -42,9 +42,12 @@ if __name__ == "__main__":
 
 
     #autoencoder = DnCNN()
-    autoencoder = DenoisingAutoencoder()
+    autoencoder = DenoisingUNet()
 
     model = new_model(autoencoder,vgg16)
+
+    #model.load_state_dict(torch.load('./archive/checkpoint/BIRDS_515_Dncnn_vgg16_epoch_11_trainacc_54.385668004448526.pt'))
+
     model = model_freeze(model)
     model = model.to(device)
 
@@ -56,17 +59,18 @@ if __name__ == "__main__":
 
     COUNTER = 10
 
-    noise_factor = 0.2
-    n_epochs = 40
+    #noise_factor = 0.1
+    n_epochs = 100
     batch_size= 32
 
     train_acc_list = []
     val_acc_list = []
-
+    best_train_acc = 0.0
     best_val_acc = 0.0
     patience = 0
-    early_stop_epochs = 5
+    early_stop_epochs = 3
     vis_count = 0
+    noise_factor = 0.3
     for epoch in range(1, n_epochs + 1):
         # monitor training loss
         model.train()
@@ -77,6 +81,7 @@ if __name__ == "__main__":
         total = 0
         i_count = 0
         acc_total = 0
+
         ###################
         # train the model #
         ###################
@@ -87,8 +92,8 @@ if __name__ == "__main__":
             ## add random noise to the input images
             noisy_imgs = images + noise_factor * torch.randn(*images.shape)
             # Clip the images to be between 0 and 1
-            noisy_imgs = np.clip(noisy_imgs, 0., 1.)
-        #
+            #noisy_imgs = np.clip(noisy_imgs, 0., 1.)
+
             # clear the gradients of all optimized variables
             optimizer.zero_grad()
             ## forward pass: compute predicted outputs by passing *noisy* images to the model
@@ -97,18 +102,18 @@ if __name__ == "__main__":
             # the "target" is still the original, not-noisy images
 
             loss = MSE(outputs, images.cuda())
-            loss2 = CrossEntropy(class_, _.cuda())
-            # loss3 = torch.sum(loss2,loss)
-            # loss3 = (loss*2.0)+(loss2)
-            loss3 = loss + loss2
-        #     # backward pass: compute gradient of the loss with respect to model parameters
+            loss2 = CrossEntropy(class_, _.cuda())*0.1
+
+            loss = loss
+
+             # backward pass: compute gradient of the loss with respect to model parameters
             loss.backward()
             # perform a single optimization step (parameter update)
             optimizer.step()
             # update running training loss
             train_loss += loss.item() * images.size(0)
             train_loss2 += loss2.item() * batch_size
-            train_loss3 += loss3.item() * batch_size
+            train_loss3 += loss.item() * batch_size
             pred = class_.argmax(dim=1)
             pred.to(device)
 
@@ -116,8 +121,8 @@ if __name__ == "__main__":
             correct += (pred == _.to(device)).sum().item()
 
             vis_count += 1
-            if vis_count%200 == 0:
-                show_test_batch(outputs[:16], images[:16], _[:16], pred[:16], class_list)
+            if vis_count%500 == 0:
+                show_test_batch(images[:16], noisy_imgs[:16],outputs[:16], _[:16], pred[:16], class_list)
 
         # print avg training statistics
         train_loss = train_loss / len(train_dataloader)
@@ -151,7 +156,7 @@ if __name__ == "__main__":
                 total += _.size(0)
                 correct += (pred == _.to(device)).sum().item()
 
-        #show_test_batch(outputs, images, _, pred, class_list)
+        show_val_batch(images,outputs, _, pred, class_list)
 
         scheduler.step()
         val_loss = val_loss / len(val_dataloader)
@@ -181,9 +186,9 @@ if __name__ == "__main__":
 
 
         if val_acc > best_val_acc:
-            best_val_acc = val_acc
+            best_train_acc = val_acc
             patience = 0
-            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_only_autoencoder_epoch_{epoch + 1}_valacc_{val_acc}.pt")
+            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_not_not_CE_clip_unet_vgg16_epoch_{epoch}_valacc_{val_acc}.pt")
             torch.save(model.state_dict(), checkpoint_path)
         else:
             patience += 1

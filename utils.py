@@ -38,26 +38,62 @@ def show_test_only_batch(images,ori,class_map):
     plt.show()
 
 
-def show_test_batch(images,ori,preds, targets, class_map):
+def show_test_batch(images, noise_imgs, output_imgs, targets, preds, class_map):
     images = denormalize(images.detach().cpu())
-    ori = denormalize(ori.detach().cpu())
+    noise_imgs = denormalize(noise_imgs.detach().cpu())
+    output_imgs = denormalize(output_imgs.detach().cpu())
     images = images.detach().cpu()
-    ori = ori.detach().cpu()
+    noise_imgs = noise_imgs.detach().cpu()
+    output_imgs = output_imgs.detach().cpu()
     images = images.numpy()
-    preds = preds.detach().cpu().numpy()
-    targets = targets.cpu().numpy()
+    noise_imgs = noise_imgs.numpy()
+    output_imgs = output_imgs.numpy()
 
-    fig, ax = plt.subplots(4, 4, figsize=(15, 15))
-    fig.tight_layout()
-    for i in range(2):
-        for j in range(4):
-            ax[i+2, j].imshow(np.transpose(images[i*4+j], (1, 2, 0)))
-            ax[i+2, j].set_title(f"Actual: {class_map[targets[i*4+j]]}\nPred: {class_map[preds[i*4+j]]}")
-            ax[i+2, j].axis("off")
+    fig, ax = plt.subplots(4, 3, figsize=(15, 15))
+    #fig.tight_layout()
 
-            ax[i, j].imshow(np.transpose(ori[i * 4 + j], (1, 2, 0)))
+    for i in range(4):
+        for j in range(3):
+            if j == 0:
+                ax[i, j].imshow(np.transpose(images[i], (1, 2, 0)))
+                ax[i, j].set_title(f"Actual: {class_map[targets[i]]}")
+            elif j == 1:
+                ax[i, j].imshow(np.transpose(noise_imgs[i], (1, 2, 0)))
+                ax[i, j].set_title("Noisy Image")
+            else:
+                ax[i, j].imshow(np.transpose(output_imgs[i], (1, 2, 0)))
+                ax[i, j].set_title(f"Pred: {class_map[preds[i]]}")
+
             ax[i, j].axis("off")
+    fig.suptitle('Train', fontsize=50)
+    plt.show()
 
+
+def show_val_batch(images, output_imgs, targets, preds, class_map):
+    images = denormalize(images.detach().cpu())
+    output_imgs = denormalize(output_imgs.detach().cpu())
+    images = images.detach().cpu()
+    output_imgs = output_imgs.detach().cpu()
+    images = images.numpy()
+    output_imgs = output_imgs.numpy()
+
+    fig, ax = plt.subplots(4, 3, figsize=(15, 15))
+    #fig.tight_layout()
+
+    for i in range(4):
+        for j in range(3):
+            if j == 0:
+                ax[i, j].imshow(np.transpose(images[i], (1, 2, 0)))
+                ax[i, j].set_title(f"Actual: {class_map[targets[i]]}")
+            elif j == 1:
+                ax[i, j].imshow(np.transpose(images[i], (1, 2, 0)))
+                ax[i, j].set_title("Image")
+            else:
+                ax[i, j].imshow(np.transpose(output_imgs[i], (1, 2, 0)))
+                ax[i, j].set_title(f"Pred: {class_map[preds[i]]}")
+
+            ax[i, j].axis("off")
+    fig.suptitle('Validation', fontsize=50)
     plt.show()
 def model_freeze(model):
     for name, param in model.named_parameters():

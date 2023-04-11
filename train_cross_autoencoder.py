@@ -9,7 +9,7 @@ from PIL import Image
 import os
 from dataset import ImageClassificationDataset
 from model import VGG16,DnCNN,new_model,REDNet30,DenoisingAutoencoder,DenoisingUNet
-from utils import model_freeze,denormalize,show_test_batch,FGSM
+from utils import model_freeze, denormalize, show_test_batch, FGSM, show_val_batch
 import torch.nn as nn
 import torch.nn.functional as F
 from tqdm import tqdm
@@ -68,9 +68,9 @@ if __name__ == "__main__":
     best_train_acc = 0.0
     best_val_acc = 0.0
     patience = 0
-    early_stop_epochs = 100
+    early_stop_epochs = 3
     vis_count = 0
-    noise_factor = 0.4
+    noise_factor = 0.3
     for epoch in range(1, n_epochs + 1):
         # monitor training loss
         model.train()
@@ -105,6 +105,7 @@ if __name__ == "__main__":
             loss2 = CrossEntropy(class_, _.cuda())*0.1
 
             loss3 = loss + loss2
+
              # backward pass: compute gradient of the loss with respect to model parameters
             loss3.backward()
             # perform a single optimization step (parameter update)
@@ -120,8 +121,8 @@ if __name__ == "__main__":
             correct += (pred == _.to(device)).sum().item()
 
             vis_count += 1
-            if vis_count%20 == 0:
-                show_test_batch(outputs[:16], noisy_imgs[:16], _[:16], pred[:16], class_list)
+            if vis_count%500 == 0:
+                show_test_batch(images[:16], noisy_imgs[:16],outputs[:16], _[:16], pred[:16], class_list)
 
         # print avg training statistics
         train_loss = train_loss / len(train_dataloader)
@@ -155,7 +156,7 @@ if __name__ == "__main__":
                 total += _.size(0)
                 correct += (pred == _.to(device)).sum().item()
 
-        show_test_batch(outputs, images, _, pred, class_list)
+        show_val_batch(images,outputs, _, pred, class_list)
 
         scheduler.step()
         val_loss = val_loss / len(val_dataloader)
@@ -185,7 +186,7 @@ if __name__ == "__main__":
 
 
         if val_acc > best_val_acc:
-            best_train_acc = val_acc
+            best_val_acc = val_acc
             patience = 0
             checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_not_clip_unet_vgg16_epoch_{epoch}_valacc_{val_acc}.pt")
             torch.save(model.state_dict(), checkpoint_path)

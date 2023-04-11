@@ -49,18 +49,18 @@ if __name__ == "__main__":
     model = model_freeze(model)
     model = model.to(device)
 
-    model.load_state_dict(torch.load('./archive/checkpoint/BIRDS_515_not_clip_unet_vgg16_epoch_1_trainacc_87.04245442676853.pt'))
+    model.load_state_dict(torch.load('./archive/checkpoint/BIRDS_515_not_not_CE_clip_unet_vgg16_epoch_2_valacc_88.58252427184466.pt'))
 
     model = model.to(device)
 
     ep = [0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
     accuracy = []
     for i in tqdm(range(len(ep))):
-        p = FGSM(train_dataloader,model=model,epsilon=ep[i])
+        p = FGSM(test_dataloader,model=model,epsilon=ep[i])
         accuracy.append(p)
     print(accuracy)
 
-    plt.plot(ep,accuracy , marker='.', c='red', label="deunet_vgg")
+    plt.plot(ep,accuracy , marker='.', c='red', label="deunet_vgg_not_ce")
     plt.legend(loc='upper right')
     plt.grid()
     plt.xlabel('ep')
