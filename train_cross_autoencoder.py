@@ -59,7 +59,7 @@ if __name__ == "__main__":
 
     COUNTER = 10
 
-    noise_factor = 0.1
+    #noise_factor = 0.1
     n_epochs = 100
     batch_size= 32
 
@@ -70,6 +70,7 @@ if __name__ == "__main__":
     patience = 0
     early_stop_epochs = 100
     vis_count = 0
+    noise_factor = 0.4
     for epoch in range(1, n_epochs + 1):
         # monitor training loss
         model.train()
@@ -80,6 +81,7 @@ if __name__ == "__main__":
         total = 0
         i_count = 0
         acc_total = 0
+
         ###################
         # train the model #
         ###################
@@ -90,8 +92,8 @@ if __name__ == "__main__":
             ## add random noise to the input images
             noisy_imgs = images + noise_factor * torch.randn(*images.shape)
             # Clip the images to be between 0 and 1
-            noisy_imgs = np.clip(noisy_imgs, 0., 1.)
-        #
+            #noisy_imgs = np.clip(noisy_imgs, 0., 1.)
+
             # clear the gradients of all optimized variables
             optimizer.zero_grad()
             ## forward pass: compute predicted outputs by passing *noisy* images to the model
@@ -118,8 +120,8 @@ if __name__ == "__main__":
             correct += (pred == _.to(device)).sum().item()
 
             vis_count += 1
-            if vis_count%100 == 0:
-                show_test_batch(outputs[:16], images[:16], _[:16], pred[:16], class_list)
+            if vis_count%20 == 0:
+                show_test_batch(outputs[:16], noisy_imgs[:16], _[:16], pred[:16], class_list)
 
         # print avg training statistics
         train_loss = train_loss / len(train_dataloader)
@@ -165,27 +167,27 @@ if __name__ == "__main__":
 
         print('Epoch: {} \tTraining Loss MSE: {:.6f}'.format(
             epoch,
-            train_loss
+            val_loss
         ))
         print('Epoch: {} \tTraining Loss CE: {:.6f}'.format(
             epoch,
-            train_loss2
+            val_loss1
         ))
         print('Epoch: {} \tTotal Loss: {:.6f}'.format(
             epoch,
-            train_loss3
+            total_val_loss
         ))
         print('Epoch: {} \tAccuracy: {:.6f}'.format(
             epoch,
-            train_acc
+            val_acc
         ))
 
 
 
-        if train_acc > best_train_acc:
-            best_train_acc = train_acc
+        if val_acc > best_val_acc:
+            best_train_acc = val_acc
             patience = 0
-            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_Dncnn_vgg16_epoch_{epoch + 1}_trainacc_{train_acc}.pt")
+            checkpoint_path = os.path.join(checkpoints_dir, f"BIRDS_515_not_clip_unet_vgg16_epoch_{epoch}_valacc_{val_acc}.pt")
             torch.save(model.state_dict(), checkpoint_path)
         else:
             patience += 1

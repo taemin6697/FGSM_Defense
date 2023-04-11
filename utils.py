@@ -110,7 +110,7 @@ def train_val_split():
                 shutil.copy(val_image_path, val_image_dest)
 
 
-def only_class_FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
+def only_class_FGSM(test_loader,model,epsilon=0.1, min_val=0, max_val=1):
     correct = 0  # Fast gradient sign method
     adv_correct = 0
     misclassified = 0
@@ -122,7 +122,8 @@ def only_class_FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
     test_images = []
     test_label = []
     criterion = nn.CrossEntropyLoss()
-    for i, (images, labels) in enumerate(test_loader):
+    for i, (images, labels) in enumerate(tqdm(test_loader)):
+
         if torch.cuda.is_available():
             images = images.cuda()
             labels = labels.cuda()
@@ -138,7 +139,8 @@ def only_class_FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
         loss.backward()
 
         grad = torch.sign(images.grad.data)  # Take the sign of the gradient.
-        images_adv = torch.clamp(images.data + epsilon * grad, min_val, max_val)  # x_adv = x + epsilon*grad
+        images_adv = images.data + epsilon * grad
+        #images_adv = torch.clamp(images.data + epsilon * grad, min_val, max_val)  # x_adv = x + epsilon*grad
 
         adv_output = model(Variable(images_adv))  # output by the model after adding adverserial noise
 
@@ -150,17 +152,6 @@ def only_class_FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
         adv_correct += (adv_predicted == labels).sum().item()
         misclassified += (predicted != adv_predicted).sum().item()
 
-        adverserial_images.extend((images_adv).cpu().data.numpy())
-        y_preds.extend(predicted.cpu().data.numpy())
-        y_preds_adv.extend(adv_predicted.cpu().data.numpy())
-        test_images.extend(images.cpu().data.numpy())
-        test_label.extend(labels.cpu().data.numpy())
-
-    np.save('adverserial_images.npy', adverserial_images)  # Save the adverserial labels, images
-    np.save('y_preds.npy', y_preds)
-    np.save('y_preds_adv.npy', y_preds_adv)
-    np.save('test_images.npy', test_images)
-    np.save('test_label.npy', test_label)
     print('Accuracy of the model w/0 adverserial attack on test images is : {} %'.format(100 * correct / total))
     print('Accuracy of the model with adverserial attack on test images is : {} %'.format(100 * adv_correct / total))
     print('Number of misclassified examples(as compared to clean predictions): {}/{}'.format(misclassified, total))
@@ -168,7 +159,7 @@ def only_class_FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
     return (100 * adv_correct / total)
 
 
-def FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
+def FGSM(test_loader,model,epsilon=0.1, min_val=0, max_val=1):
     correct = 0  # Fast gradient sign method
     adv_correct = 0
     misclassified = 0
@@ -179,28 +170,31 @@ def FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
     y_preds_adv = []
     test_images = []
     test_label = []
+    noise_factor = 0.1
     criterion = nn.CrossEntropyLoss()
     for i, (images, labels) in (enumerate(tqdm(test_loader))):
+
         if torch.cuda.is_available():
             images = images.cuda()
             labels = labels.cuda()
         images = Variable(images, requires_grad=True)
         labels = Variable(labels)
 
-        outputs, temp = model(images)
+        outputs, zer = model(images)
 
-        loss = criterion(temp, labels)
+        loss = criterion(zer, labels)
         model.zero_grad()
         if images.grad is not None:
             images.grad.data.fill_(0)
         loss.backward()
 
         grad = torch.sign(images.grad.data)  # Take the sign of the gradient.
-        images_adv = torch.clamp(images.data + epsilon * grad, min_val, max_val)  # x_adv = x + epsilon*grad
+        images_adv = images.data + epsilon * grad
+        #images_adv = torch.clamp(images.data + epsilon * grad, min_val, max_val)  # x_adv = x + epsilon*grad
 
         adv_output, temp = model(Variable(images_adv))  # output by the model after adding adverserial noise
 
-        _, predicted = torch.max(temp.data, 1)  # Prediction on the clean image
+        _, predicted = torch.max(zer.data, 1)  # Prediction on the clean image
         _, adv_predicted = torch.max(temp.data, 1)  # Prediction on the image after adding adverserial noise
 
         total += labels.size(0)
@@ -208,17 +202,6 @@ def FGSM(test_loader,model,epsilon=0.1, min_val=-1, max_val=1):
         adv_correct += (adv_predicted == labels).sum().item()
         misclassified += (predicted != adv_predicted).sum().item()
 
-        adverserial_images.extend((images_adv).cpu().data.numpy())
-        y_preds.extend(predicted.cpu().data.numpy())
-        y_preds_adv.extend(adv_predicted.cpu().data.numpy())
-        test_images.extend(images.cpu().data.numpy())
-        test_label.extend(labels.cpu().data.numpy())
-
-    np.save('adverserial_images.npy', adverserial_images)  # Save the adverserial labels, images
-    np.save('y_preds.npy', y_preds)
-    np.save('y_preds_adv.npy', y_preds_adv)
-    np.save('test_images.npy', test_images)
-    np.save('test_label.npy', test_label)
     print('Accuracy of the model w/0 adverserial attack on test images is : {} %'.format(100 * correct / total))
     print('Accuracy of the model with adverserial attack on test images is : {} %'.format(100 * adv_correct / total))
     print('Number of misclassified examples(as compared to clean predictions): {}/{}'.format(misclassified, total))
