@@ -102,7 +102,7 @@ if __name__ == "__main__":
             # the "target" is still the original, not-noisy images
 
             loss = MSE(outputs, images.cuda())
-            loss2 = CrossEntropy(class_, _.cuda())*0.1
+            loss2 = CrossEntropy(class_, _.cuda()) * 0.1
 
             loss3 = loss + loss2
 

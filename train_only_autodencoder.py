@@ -104,7 +104,7 @@ if __name__ == "__main__":
             loss = MSE(outputs, images.cuda())
             loss2 = CrossEntropy(class_, _.cuda())*0.1
 
-            loss = loss
+
 
              # backward pass: compute gradient of the loss with respect to model parameters
             loss.backward()

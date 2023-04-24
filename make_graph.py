@@ -12,11 +12,11 @@ ep = [0.00,0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1]
 
 # plot the lists
 #plt.plot(DeUnet_VGG16_CE_3epoch, color='blue', label='DeUnet_VGG16_CE_3epoch',)
-plt.plot(DeUnet_VGG16_CE_2epoch, color='red', label='DeUnet_VGG16_CE_2epoch')
+plt.plot(DeUnet_VGG16_CE_2epoch, color='red', label='DeUnet_VGG16_CE_2epoch', marker='o')
 #plt.plot(DeUnet_VGG16_CE_1epoch, color='green', label='DeUnet_VGG16_CE_1epoch')
 
 #plt.plot(DeUnet_VGG16_1epoch, color='orange', label='DeUnet_VGG16_1epoch')
-plt.plot(DeUnet_VGG16_2epoch, color='purple', label='DeUnet_VGG16_2epoch')
+plt.plot(DeUnet_VGG16_2epoch, color='purple', label='DeUnet_VGG16_2epoch',marker='o')
 #plt.plot(DeUnet_VGG16_3epoch, color='cyan', label='DeUnet_VGG16_3epoch')
 
 #plt.plot(VGG16, color='pink', label='VGG16')

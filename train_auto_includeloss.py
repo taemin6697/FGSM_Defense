@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     COUNTER = 10
 
-    noise_factor = 0.2
+    noise_factor = 0.3
     n_epochs = 40
     batch_size= 32
 
